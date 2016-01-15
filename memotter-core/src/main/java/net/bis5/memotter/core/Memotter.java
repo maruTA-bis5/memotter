@@ -190,7 +190,7 @@ public class Memotter extends Command<MemotterObject> {
         Status status = twtr.updateStatus( getPrefix( true) + content + getSuffix());
         String userName = status.getUser().getScreenName();
         String id = Long.toString( status.getId());
-        return new MessageObject( "https://twitter.com/" + userName + "/" + id);
+        return new MessageObject( "https://twitter.com/" + userName + "/statuses/" + id);
     }
 
     /**
