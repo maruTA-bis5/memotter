@@ -14,19 +14,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package net.bis5.memotter.subcommand;
+package net.bis5.memotter.command;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import net.bis5.memotter.core.ArgsList;
+import net.bis5.memotter.core.Command;
 import net.bis5.memotter.core.Memotter;
 import net.bis5.memotter.model.ErrorObject;
 import net.bis5.memotter.model.MemotterObject;
@@ -37,17 +37,27 @@ import twitter4j.TwitterException;
  * @author T.Maruyama
  * @since 2016/01/14
  */
-public class Url implements SubCommand<MemotterObject> {
+public class Url extends Command<MemotterObject> {
+
+    public ErrorObject generateHelp() {
+        ErrorObject help = new ErrorObject();
+        help.setErrorDetail( "Usage: Url <URL>");
+        return help;
+    }
 
     /**
-     * @see net.bis5.memotter.subcommand.SubCommand#execute(java.lang.String[])
+     * @see net.bis5.memotter.core.Command#getCommandPackage()
      */
     @Override
-    public MemotterObject execute( String... args) {
-        List<String> argsList = new ArrayList<>( args.length);
-        for ( String arg : args) {
-            argsList.add( arg);
-        }
+    protected String getCommandPackage() {
+        return null;
+    }
+
+    /**
+     * @see net.bis5.memotter.core.Command#execute(net.bis5.memotter.core.ArgsList)
+     */
+    @Override
+    public MemotterObject execute( ArgsList argsList) {
         Stream<String> argsStream = argsList.stream();
         String title = null;
         try {
@@ -69,22 +79,12 @@ public class Url implements SubCommand<MemotterObject> {
 
         Memotter memotter = Memotter.getSingleton();
         try {
-            return memotter.memo( title + " " + args[0]);
+            return memotter.memo( title + " " + argsList.getFirst());
         }
         catch ( TwitterException e) {
             e.printStackTrace();
             return generateHelp();
         }
-    }
-
-    /**
-     * @see net.bis5.memotter.subcommand.SubCommand#generateHelp()
-     */
-    @Override
-    public ErrorObject generateHelp() {
-        ErrorObject help = new ErrorObject();
-        help.setErrorDetail( "Usage: Url <URL>");
-        return help;
     }
 
 }

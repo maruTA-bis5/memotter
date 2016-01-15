@@ -32,8 +32,10 @@ import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.bis5.memotter.exception.CommandNotFoundException;
+import net.bis5.memotter.exception.MemotterException;
 import net.bis5.memotter.model.MemotterObject;
-import net.bis5.memotter.subcommand.SubCommand;
+import net.bis5.memotter.model.MessageObject;
 import twitter4j.JSONException;
 import twitter4j.JSONObject;
 import twitter4j.Status;
@@ -47,7 +49,7 @@ import twitter4j.auth.AccessToken;
  * @author T.Maruyama
  * @since 2016/01/14
  */
-public class Memotter {
+public class Memotter extends Command<MemotterObject> {
     @Getter
     @Setter
     private String consumerSecret;
@@ -148,22 +150,6 @@ public class Memotter {
         return new AccessToken( token, tokenSecret);
     }
 
-    public <T> T callSubCommand( String subCommandName, String... args) {
-        final String subCommandPkg = SubCommand.class.getPackage().getName() + ".";
-        String commandFqcn = subCommandPkg + subCommandName;
-
-        try {
-            @SuppressWarnings( "unchecked")
-            SubCommand<T> command = ( SubCommand<T>) Class.forName( commandFqcn).newInstance();
-            return command.execute( args);
-        }
-        catch ( ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
-            throw new RuntimeException( e);
-        }
-
-    }
-
     private static final String KEY_PREFIX = "prefix";
 
     private static final String KEY_SUFFIX = "suffix";
@@ -204,13 +190,34 @@ public class Memotter {
         Status status = twtr.updateStatus( getPrefix( true) + content + getSuffix());
         String userName = status.getUser().getScreenName();
         String id = Long.toString( status.getId());
-        return new MemotterObject() {
-            @Override
-            public String getMessage() {
-                return "https://twitter.com/" + userName + "/" + id;
-            }
-        };
+        return new MessageObject( "https://twitter.com/" + userName + "/" + id);
+    }
 
+    /**
+     * @see net.bis5.memotter.core.Command#getCommandPackage()
+     */
+    @Override
+    protected String getCommandPackage() {
+        return "net.bis5.memotter.command";
+    }
+
+    /**
+     * @see net.bis5.memotter.core.Command#execute(net.bis5.memotter.core.ArgsList)
+     */
+    @Override
+    public MemotterObject execute( ArgsList args) {
+        String command = args.getFirst();
+        ArgsList commandArgs = args.shift();
+        try {
+            MemotterObject result = callSubCommand( command, commandArgs);
+            return result;
+        }
+        catch ( CommandNotFoundException e) {
+            return new MessageObject( Memotter.class.getSimpleName() + ": Command not found");
+        }
+        catch ( MemotterException e) {
+            throw e;
+        }
     }
 
 }

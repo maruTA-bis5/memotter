@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import net.bis5.memotter.core.ArgsList;
 import net.bis5.memotter.core.Memotter;
 import net.bis5.memotter.model.MemotterObject;
 
@@ -49,13 +50,17 @@ public class Cli {
                 if ( inputArr.length == 0) {
                     continue;
                 }
-                String command = inputArr[0];
+                ArgsList argsList = new ArgsList();
+                for ( String in : inputArr) {
+                    argsList.add( in);
+                }
+
+                String command = argsList.getFirst();
                 if ( "exit".equals( command.toLowerCase())) {
                     // TODO shutdown
                     break;
                 }
-                inputArr = input.substring( command.length() + 1, input.length()).split( " ");
-                MemotterObject result = memotter.callSubCommand( command, inputArr);
+                MemotterObject result = memotter.execute( argsList);
                 System.out.println( result.getMessage());
             }
             catch ( Exception e) {
