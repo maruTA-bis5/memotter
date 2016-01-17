@@ -14,4 +14,24 @@
   		<version>${project.version}</version>
   	</dependency>
   </dependencies>
+  <build>
+  	<plugins>
+  		<plugin>
+  			<groupId>org.codehaus.mojo</groupId>
+  			<artifactId>findbugs-maven-plugin</artifactId>
+  			<version>3.0.3</version>
+  			<configuration>
+  				<effort>Default</effort>
+  			</configuration>
+  			<executions>
+  				<execution>
+  					<phase>test</phase>
+  					<goals>
+  						<goal>check</goal>
+  					</goals>
+  				</execution>
+  			</executions>
+  		</plugin>
+  	</plugins>
+  	</build>
 </project>
