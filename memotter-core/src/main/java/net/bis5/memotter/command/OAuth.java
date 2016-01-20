@@ -26,6 +26,7 @@ import net.bis5.memotter.core.Command;
 import net.bis5.memotter.core.Memotter;
 import net.bis5.memotter.model.ErrorObject;
 import net.bis5.memotter.model.MemotterObject;
+import net.bis5.memotter.model.MessageObject;
 import twitter4j.JSONObject;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -46,7 +47,9 @@ public class OAuth extends Command<JSONObject> {
 
     private static final String COMMAND_PIN = "pin";
 
-    private static final Collection<String> COMMANDS = Arrays.asList( COMMAND_REQUEST, COMMAND_PIN);
+    private static final String COMMAND_RESET = "reset";
+
+    private static final Collection<String> COMMANDS = Arrays.asList( COMMAND_REQUEST, COMMAND_PIN, COMMAND_RESET);
 
     protected JSONObject doOAuthRequest( List<String> args) throws TwitterException {
         Twitter twtr = TwitterFactory.getSingleton();
@@ -136,6 +139,9 @@ public class OAuth extends Command<JSONObject> {
                 case COMMAND_PIN:
                     result = doPinInput( subArgs);
                     break;
+                case COMMAND_RESET:
+                    result = doReset();
+                    break;
                 default:
                     System.err.println( "unknown command: " + command);
                     result = generateHelp();
@@ -146,6 +152,11 @@ public class OAuth extends Command<JSONObject> {
             result = generateHelp();
         }
         return result;
+    }
+
+    private JSONObject doReset() throws TwitterException {
+        Memotter.getSingleton().setAccessToken( new AccessToken( "", ""));
+        return new MessageObject( "OAuth reset!");
     }
 
 }
