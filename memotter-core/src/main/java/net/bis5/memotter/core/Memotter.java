@@ -132,10 +132,8 @@ public class Memotter extends Command<MemotterObject> {
     public void setAccessToken( AccessToken accessToken) throws TwitterException {
         String token = accessToken.getToken();
         String tokenSecret = accessToken.getTokenSecret();
-        Long userId = TwitterFactory.getSingleton().verifyCredentials().getId();
         temporaryStorage.put( KEY_ACCESS_TOKEN, token);
         temporaryStorage.put( KEY_ACCESS_TOKEN_SECRET, tokenSecret);
-        temporaryStorage.put( KEY_ACCESS_TOKEN_USERID, userId);
         try {
             persist();
         }
@@ -147,6 +145,9 @@ public class Memotter extends Command<MemotterObject> {
     public AccessToken getAccessToken() {
         String token = getStorageItem( KEY_ACCESS_TOKEN);
         String tokenSecret = getStorageItem( KEY_ACCESS_TOKEN_SECRET);
+        if ( token == null || tokenSecret == null) {
+            return null;
+        }
         return new AccessToken( token, tokenSecret);
     }
 
@@ -180,17 +181,32 @@ public class Memotter extends Command<MemotterObject> {
      */
     public MemotterObject memo( String content) throws TwitterException {
         Twitter twtr = TwitterFactory.getSingleton();
-        twtr.setOAuthAccessToken( getAccessToken());
+        AccessToken accessToken = getAccessToken();
+        if ( accessToken == null) {
+            return new MessageObject( "Please authorization first!");
+        }
+
         try {
+            twtr.setOAuthAccessToken( getAccessToken());
             twtr.setOAuthConsumer( getConsumerKey(), getConsumerSecret());
         }
         catch ( IllegalStateException e) {
             // no op
         }
-        Status status = twtr.updateStatus( getPrefix( true) + content + getSuffix());
-        String userName = status.getUser().getScreenName();
-        String id = Long.toString( status.getId());
-        return new MessageObject( "https://twitter.com/" + userName + "/statuses/" + id);
+        try {
+            Status status = twtr.updateStatus( getPrefix( true) + content + getSuffix());
+            String userName = status.getUser().getScreenName();
+            String id = Long.toString( status.getId());
+            return new MessageObject( "https://twitter.com/" + userName + "/statuses/" + id);
+        }
+        catch ( TwitterException e) {
+            if ( e.getErrorCode() == TwitterException.UNAUTHORIZED) {
+                return new MessageObject( "Please authorization first!");
+            }
+            else {
+                throw e;
+            }
+        }
     }
 
     /**
