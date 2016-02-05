@@ -16,14 +16,12 @@
  */
 package net.bis5.memotter.command;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import java.util.stream.Stream;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 import net.bis5.memotter.core.ArgsList;
 import net.bis5.memotter.core.Command;
@@ -61,15 +59,17 @@ public class Url extends Command<MemotterObject> {
         Stream<String> argsStream = argsList.stream();
         String title = null;
         try {
-            URL url = new URL( argsStream.findFirst().orElse( null));
-            BufferedReader reader = new BufferedReader( new InputStreamReader( url.openConnection().getInputStream()));
-            String content = reader.lines().collect( Collectors.joining());
-            reader.close();
+            Optional<String> url = argsStream.findFirst();
+            if ( !url.isPresent()) {
+                return generateHelp();
+            }
 
-            Pattern titlePattern = Pattern.compile( "<title>([^<]+)</title>", Pattern.CASE_INSENSITIVE);
-            Matcher matcher = titlePattern.matcher( content);
-            if ( matcher.find()) {
-                title = matcher.group( 1);
+            Document content = Jsoup.connect( url.get()).get();
+            if ( content.title() == null) {
+                title = "";
+            }
+            else {
+                title = new String( content.title().getBytes( content.charset()), content.charset());
             }
         }
         catch ( IOException e) {
